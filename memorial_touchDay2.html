@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1920, initial-scale=1">
+<title>NC EMS Expo — In Memoriam</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Open+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --navy: #1D3968;
+    --red: #B70C0C;
+    --gold: #C9A84C;
+    --gold-light: #E2C47A;
+    --white: #F5F0E8;
+    --black: #0A0A0A;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    width: 1920px; height: 1080px;
+    overflow: hidden; background: var(--navy);
+    font-family: 'Open Sans', sans-serif;
+    cursor: none;
+  }
+
+  /* ===== BACKGROUND ===== */
+
+
+  /* ===== HEADER ===== */
+  .memorial-header {
+    position: absolute; top: 0; left: 0; right: 0;
+    padding: 48px 80px 36px;
+    text-align: center;
+    background: linear-gradient(180deg, rgba(10,10,20,0.98) 60%, transparent);
+    z-index: 10;
+  }
+  .memorial-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 72px; font-weight: 300;
+    color: var(--white); line-height: 1; letter-spacing: 2px;
+  }
+  .memorial-title span { color: var(--gold); font-style: italic; }
+  .memorial-sub {
+    font-family: 'Open Sans', sans-serif; font-weight: 300;
+    font-size: 12px; letter-spacing: 5px; text-transform: uppercase;
+    color: rgba(245,240,232,0.4); margin-top: 14px;
+  }
+  .divider-line {
+    width: 200px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 16px auto 0;
+  }
+
+  /* ===== NAMES ===== */
+  #names-container {
+    position: absolute; left: 0; right: 0;
+    top: 180px; bottom: 160px;
+    overflow: hidden;
+    cursor: grab;
+    user-select: none;
+  }
+  #names-container.dragging { cursor: grabbing; }
+  #names-track {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    will-change: transform;
+    transform: translateY(0);
+  }
+
+  .name-entry {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 16px 24px;
+    border-bottom: 1px solid rgba(201,168,76,0.08);
+  }
+  .name-entry .entry-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 58px; font-weight: 400;
+    color: var(--white); letter-spacing: 2px;
+    text-transform: uppercase; text-align: center;
+  }
+  .name-entry .entry-meta {
+    display: block;
+    font-family: 'Open Sans', sans-serif; font-weight: 300;
+    font-size: 30px; letter-spacing: 2px; text-transform: uppercase;
+    color: #ffffff;
+    margin-top: 4px; text-align: center;
+  }
+
+  /* ===== BOTTOM UI ===== */
+  .count-badge {
+    position: absolute; bottom: 40px; left: 48px;
+    display: flex; flex-direction: column; align-items: flex-start;
+    z-index: 20;
+  }
+  .count-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 48px; font-weight: 300; color: var(--gold); line-height: 1;
+  }
+  .count-label {
+    font-size: 9px; letter-spacing: 4px; text-transform: uppercase;
+    color: rgba(245,240,232,0.3); margin-top: 4px;
+  }
+
+  .interact-hint {
+    position: absolute; top: 36px; left: 48px;
+    z-index: 20;
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Open Sans', sans-serif; font-weight: 300;
+    font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+    color: rgba(201,168,76,0.6);
+  }
+  .interact-hint::before {
+    content: '';
+    width: 18px; height: 1px;
+    background: rgba(201,168,76,0.4);
+  }
+
+  /* ===== TOUCH RIPPLE ===== */
+  .ripple {
+    position: fixed; border-radius: 50%;
+    pointer-events: none; z-index: 9999;
+    background: radial-gradient(circle, rgba(201,168,76,0.4) 0%, transparent 70%);
+    animation: rippleAnim 0.6s ease-out forwards;
+  }
+  @keyframes rippleAnim {
+    from { width: 0; height: 0; opacity: 1; transform: translate(-50%,-50%) scale(0); }
+    to   { width: 120px; height: 120px; opacity: 0; transform: translate(-50%,-50%) scale(1); }
+  }
+</style>
+</head>
+<body>
+
+<div class="memorial-header">
+  <div class="memorial-title">In <span>Memoriam</span></div>
+  <div class="memorial-sub">Honoring Those Who Answered the Call</div>
+  <div class="divider-line"></div>
+</div>
+
+<div class="interact-hint">Touch &amp; drag to scroll</div>
+
+<div id="names-container">
+  <div id="names-track"></div>
+</div>
+
+<div class="count-badge">
+  <div class="count-number">107</div>
+  <div class="count-label">Fallen Members</div>
+</div>
+
+<script>
+// ===== NAMES =====
+const NAMES = [
+  { name: 'TENITA HARRINGTON', agency: 'FIRSTHEALTH REGIONAL EMS', date: '03-19-25' },
+  { name: 'RALPH CARDER', agency: 'CHEROKEE COUNTY RESCUE', date: '04-03-25' },
+  { name: 'KENNETH AUTRY', agency: 'PUPPY CREEK FIRE DEPT', date: '04-07-25' },
+  { name: 'NORA FORE', agency: 'NAKINA FIRE & RESCUE', date: '04-07-25' },
+  { name: 'JERRY SHOAF', agency: 'GUILFORD COUNTY EMS', date: '04-10-25' },
+  { name: 'TOMMY CABE', agency: 'RANLO FIRE & RESCUE', date: '04-11-25' },
+  { name: 'KEVIN HELMS', agency: 'NORTH BROOK FIRE & RESCUE', date: '04-13-25' },
+  { name: 'PHILLIP HOLLIFIELD', agency: 'CLAY CO. FIRE & RESCUE', date: '04-14-25' },
+  { name: 'CHIEF MICHAEL SCOTT', agency: 'SUNNY POINT FIRE & RESCUE', date: '04-20-25' },
+  { name: 'MARGARET PARRISH', agency: 'COASTLINE RESCUE SQUAD', date: '04-27-25' },
+  { name: "KEVIN O'CONNOR", agency: 'DURHAM COUNTY EMS', date: '04-28-25' },
+  { name: 'GEORGE GOODWIN', agency: 'FREMONT EMERGENCY SERVICES', date: '05-01-25' },
+  { name: 'REX POWELL', agency: 'OAK HILL FIRE & RESCUE', date: '05-01-25' },
+  { name: 'APRIL ARDIS', agency: 'GOLDSBORO FIRE DEPARTMENT', date: '05-02-25' },
+  { name: 'EDWARD WEIGL', agency: 'NO. 7 TOWNSHIP FIRE & RESCUE', date: '05-02-25' },
+  { name: 'JAMES HAYES', agency: 'YADKIN COUNTY RESCUE SQUAD', date: '05-05-25' },
+  { name: 'THRUMAN LEWIS', agency: 'GODWIN-FALCON FIRE DEPARTMENT', date: '05-21-25' },
+  { name: 'ROBERT COMPTON', agency: 'MOORESVILLE FIRE DEPARTMENT', date: '06-04-25' },
+  { name: 'JAKE BRIDGES', agency: 'HICKORY FIRE DEPARTMENT', date: '06-05-25' },
+  { name: 'VIOLET CARAMELLA', agency: 'RICEVILLE FIRE & RESCUE', date: '06-14-25' },
+  { name: 'WHITNEY RODGERS', agency: 'DURHAM COUNTY EMS', date: '06-18-25' },
+  { name: 'CHUCK HOLCOMB', agency: 'ELKIN EMERGENCY RESCUE', date: '06-20-25' },
+  { name: 'WILLIAM PATE', agency: 'DUPLIN COUNTY EMS', date: '06-21-25' },
+  { name: 'EDNA MARTIN', agency: 'BUNCOMBE COUNTY RESCUE', date: '06-23-25' },
+  { name: 'JAMIE ROSSI', agency: 'MILL CREEK FIRE & RESCUE', date: '06-25-25' },
+  { name: 'JOHN PORTER', agency: 'CHATHAM COUNTY RESCUE SQUAD', date: '07-01-25' },
+  { name: 'AUDREY BREEDLOVE', agency: 'GLENVILLE-CASHIERS RESCUE', date: '07-02-25' },
+  { name: 'EARL MACE', agency: 'SHELBY RESCUE SQUAD', date: '07-08-25' },
+  { name: 'OWEN HARRIS', agency: 'COTTON FIRE DEPARTMENT', date: '07-10-25' },
+  { name: 'MARY PAYNE', agency: 'FRANCISCO FIRE DEPARTMENT', date: '07-11-25' },
+  { name: 'JERRY SIMMONS', agency: 'BEULAVILLE FIRE DEPARTMENT', date: '07-19-25' },
+  { name: 'WILLIAM LOWE', agency: 'UPPER CLEVELAND RESCUE', date: '07-23-25' },
+  { name: 'WILLARD COPELAND', agency: 'PERQUIMANS COUNTY RESCUE', date: '07-25-25' },
+  { name: 'GARY CUMMINGS', agency: 'CYPRESS POINTE FIRE & RESCUE', date: '07-27-25' },
+  { name: 'KENNETH STEWART', agency: 'BUIES CREEK FIRE & RESCUE', date: '08-02-25' },
+  { name: 'GARRY CHILTON', agency: 'PILOT MOUNTAIN RESCUE & EMS', date: '08-04-25' },
+  { name: 'WALTER SHIVAR', agency: 'GOLDSBORO RESCUE & EMS', date: '08-06-25' },
+  { name: 'DAVID MONTAGUE', agency: 'CABARRUS COUNTY EMS', date: '08-07-25' },
+  { name: 'RUDOLPH BECTON', agency: 'DUPLIN COUNTY EMS', date: '08-08-25' },
+  { name: 'MAXWELL FISHLOVE', agency: 'PINEVILLE-MORROW FIRE & RESCUE', date: '08-14-25' },
+  { name: 'DANNY EDWARDS', agency: 'MAR-MAC FIRE DEPARTMENT', date: '08-19-25' },
+  { name: 'ROGER HOWERTON', agency: 'OAK RIDGE FIRE & RESCUE', date: '08-19-25' },
+  { name: 'LINWOOD HILL', agency: 'WADE FIRE DEPARTMENT', date: '08-22-25' },
+  { name: 'JOHN MARTIN', agency: 'CLEVELAND COUNTY EMS', date: '08-28-25' },
+  { name: 'NORMAN COE', agency: 'SMITHFIELD RESCUE SQUAD', date: '08-29-25' },
+  { name: 'GEORGE WINSTEAD', agency: 'NASH COUNTY EMS / COOPERS FIRE & RESCUE', date: '09-01-25' },
+  { name: 'LIBBY BOATWRIGHT', agency: 'PINEVILLE-MORROW FIRE & RESCUE', date: '09-08-25' },
+  { name: 'MILTON ALMOND', agency: 'MOORESVILLE FIRE DEPARTMENT', date: '09-09-25' },
+  { name: 'MICHAEL PENNIGER', agency: 'CABARRUS COUNTY EMS', date: '09-14-25' },
+  { name: 'LINNY PRIDGEN', agency: 'K9 EMERGENCY RESPONSE TEAM', date: '09-17-25' },
+  { name: 'DAVIS GREGORY', agency: 'DANVILLE LIFE SAVING CREW', date: '09-22-25' },
+  { name: 'WILLIAM GATEWOOD', agency: 'DANVILLE LIFE SAVING CREW', date: '09-26-25' },
+  { name: 'JUDY GRIMES', agency: 'SUTTONTOWN EMS', date: '09-27-25' },
+  { name: 'STAVRI KOLLAR', agency: 'SAMPSON COUNTY EMS', date: '10-07-25' },
+  { name: 'BARRY BUNN, MD', agency: 'EDGECOMBE COUNTY EMS', date: '10-08-25' },
+  { name: 'LOIS BARKER', agency: 'HELTON AMBULANCE SERVICE', date: '10-11-25' },
+  { name: 'NED HOGGARD', agency: 'BERTIE COUNTY EMERGENCY SERVICES', date: '10-13-25' },
+  { name: 'MARILYN OUTLAND', agency: 'FARMVILLE EMS', date: '10-13-25' },
+  { name: 'AARON COTTEN, MD', agency: 'LENOIR COUNTY EMS', date: '10-17-25' },
+  { name: 'EDDIE BAKER', agency: 'MOORESVILLE FIRE DEPARTMENT', date: '10-19-25' },
+  { name: 'DAVID WALLACE', agency: 'ELLERBE RESCUE SQUAD', date: '10-20-25' },
+  { name: 'NATHALIE BRITT', agency: 'TRANSYLVANIA COUNTY EMS', date: '10-23-25' },
+  { name: 'OTHA PIPER', agency: 'GRANVILLE COUNTY SEARCH AND RECOVERY', date: '10-27-25' },
+  { name: 'PAUL NANCE', agency: 'CERRO GORDO FIRE & RESCUE', date: '11-07-25' },
+  { name: 'SANDRA WILSON', agency: 'BEAVER LANE FIRE & RESCUE', date: '11-12-25' },
+  { name: 'MARY JOLLY', agency: 'GASTON COUNTY E.M.S.', date: '11-17-25' },
+  { name: 'TINA STAMEY', agency: 'LINVILLE-CENTRAL RESCUE SQUAD', date: '11-22-25' },
+  { name: 'TED DERR', agency: 'ROBBINS FIRE & RESCUE', date: '11-25-25' },
+  { name: 'JAMIE EVERHART', agency: 'WELCOME FIRE & RESCUE', date: '11-28-25' },
+  { name: 'ALLEN CARLYLE', agency: 'ROWAN COUNTY RESCUE SQUAD', date: '11-29-25' },
+  { name: 'TIMOTHY REID', agency: 'EBENEZER FIRE & RESCUE', date: '12-02-25' },
+  { name: 'GEORGE BRANNON', agency: 'GREENVILLE FIRE & RESCUE', date: '12-06-25' },
+  { name: 'ROYIE MASSENGILL', agency: 'FOUR OAKS RESCUE SQUAD', date: '12-09-25' },
+  { name: 'JACK ADAMS', agency: 'EAST BEND FIRE DEPARTMENT', date: '12-10-25' },
+  { name: 'ELEANOR LOCKHART', agency: 'RHEMS FIRE DEPARTMENT', date: '12-12-25' },
+  { name: 'TERRY BALLARD', agency: 'AVERY COUNTY RESCUE SQUAD', date: '12-18-25' },
+  { name: 'ROBERT CAREY', agency: 'GARLAND FIRE DEPT', date: '12-28-25' },
+  { name: 'TERRY MCKAY', agency: 'HARNETT COUNTY EMS', date: '12-29-25' },
+  { name: 'WILLIE ARNETTE', agency: 'WARSAW/MAGNOLIA/DUPLIN CO EMS', date: '12-30-25' },
+  { name: 'RAYMOND DAIL', agency: 'NO. 9 TOWNSHIP FIRE & RESCUE', date: '12-31-25' },
+  { name: 'JOHN BENJAMIN', agency: 'MILLS RIVER FIRE & RESCUE', date: '01-02-26' },
+  { name: 'DAVID MOORE', agency: 'A-D-R FIRE & RESCUE', date: '01-03-26' },
+  { name: 'PANSY TEAGUE', agency: 'MOORE COUNTY RESCUE #2', date: '01-07-26' },
+  { name: 'IRVIN STEPHENS', agency: 'COMO EMS', date: '01-08-26' },
+  { name: 'JULIAN PATTERSON', agency: 'WILSON COUNTY RESCUE SQUAD', date: '01-09-26' },
+  { name: 'WANDA SELLERS', agency: 'GRAHAM COUNTY RESCUE SQUAD', date: '01-19-26' },
+  { name: 'LARRY STEFFEE', agency: 'SURF CITY FIRE DEPARTMENT', date: '01-21-26' },
+  { name: 'JIMMIE BLACKMAN', agency: 'GARLAND EMERGENCY MEDICAL SERVICES', date: '01-29-26' },
+  { name: 'JEFFERY COLE', agency: 'WEST BUNCOMBE FIRE DEPARTMENT', date: '02-13-26' },
+  { name: 'LARRY McCROSKEY', agency: 'STANLY COUNTY RESCUE', date: '02-13-26' },
+  { name: 'FRANK AVANT', agency: 'HERTFORD COUNTY EMS', date: '02-14-26' },
+  { name: 'JOSEPH PULLEN', agency: 'CRAMERTON FIRE DEPARTMENT', date: '02-20-26' },
+  { name: 'MARION WADE', agency: 'HOKE COUNTY RESCUE SQUAD', date: '02-27-26' },
+  { name: 'DONALD MCCORQUODALE', agency: 'PLAIN VIEW FIRE DEPARTMENT', date: '03-07-26' },
+  { name: 'CARLTON WRIGHT', agency: 'VANCE COUNTY RESCUE SQUAD', date: '03-07-26' },
+  { name: 'HELEN SULLIVAN', agency: 'HELTON AMBULANCE SERVICE', date: '03-11-26' },
+  { name: 'ROBERT HILL', agency: 'DURHAM COUNTY EMS', date: '03-15-26' },
+  { name: 'SARAH BALDREE', agency: 'AYDEN RESCUE & EMS', date: '03-23-26' },
+  { name: 'HUBERT KINLAW', agency: 'ELIZABETHTOWN RESCUE SQUAD', date: '03-23-26' },
+  { name: 'CHRIS DORSEY', agency: 'BUNCOMBE COUNTY EMS', date: '03-24-26' },
+  { name: 'CHRISTOPHER KIESTLER', agency: 'NEW HANOVER / FORSYTH FIRE', date: '03-24-26' },
+  { name: 'ESTHER BABSON', agency: 'BLADENBORO EMS / BLADEN CO EMS', date: '03-26-26' },
+  { name: 'JAMES RICHARD BARNHILL', agency: 'NO. 9 TOWNSHIP FIRE & RESCUE', date: '04-17-26' },
+  { name: 'JOHN H. BURTON JR.', agency: 'TURKEY CREEK FIRE & RESCUE, INC.', date: '04-17-26' },
+  { name: 'MARK ALAN CARTER', agency: 'ROCKFISH FIRE DEPARTMENT', date: '04-23-26' },
+  { name: 'KEITH FRANKLIN OWENS', agency: 'THE GAMEWELL VOLUNTEER FIRE DEPARTMENT INC', date: '04-24-26' },
+  { name: 'MICHAEL SLADES', agency: 'EDENTON-CHOWAN RESCUE & EMS', date: '03-27-26' },
+];
+
+// ===== BUILD NAMES — single copy only =====
+function buildNames() {
+  const track = document.getElementById('names-track');
+  NAMES.forEach(entry => {
+    const el = document.createElement('div');
+    el.className = 'name-entry';
+    el.innerHTML = `
+      <span class="entry-name">${entry.name}</span>
+      <span class="entry-meta">${entry.agency} &bull; ${entry.date}</span>
+    `;
+    track.appendChild(el);
+  });
+}
+buildNames();
+
+
+
+// ===== RAF SCROLL + DRAG =====
+(function() {
+  const container = document.getElementById('names-container');
+  const track = document.getElementById('names-track');
+
+  // Pixels per second scroll speed
+  const SPEED = 70;
+
+  let y = 0;
+  let lastTime = null;
+  let dragging = false;
+  let dragStartY = 0;
+  let dragStartPos = 0;
+  let paused = false;
+
+  function getTrackHeight() { return track.scrollHeight; }
+  function getContainerHeight() { return container.clientHeight; }
+
+  function tick(ts) {
+    if (!lastTime) lastTime = ts;
+    const dt = (ts - lastTime) / 1000;
+    lastTime = ts;
+
+    if (!dragging && !paused) {
+      y += SPEED * dt;
+      // Seamless loop — when we've scrolled past all entries, reset
+      const maxY = getTrackHeight() - getContainerHeight();
+      if (y >= maxY) y = 0;
+      track.style.transform = `translateY(${-y}px)`;
+    }
+
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+
+  // Drag
+  function startDrag(clientY) {
+    dragging = true;
+    paused = true;
+    dragStartY = clientY;
+    dragStartPos = y;
+    container.classList.add('dragging');
+  }
+  function moveDrag(clientY) {
+    if (!dragging) return;
+    const delta = dragStartY - clientY;
+    const maxY = getTrackHeight() - getContainerHeight();
+    y = Math.max(0, Math.min(maxY, dragStartPos + delta));
+    track.style.transform = `translateY(${-y}px)`;
+  }
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    paused = false;
+    lastTime = null;
+    container.classList.remove('dragging');
+  }
+
+  container.addEventListener('touchstart', e => startDrag(e.touches[0].clientY), { passive: true });
+  container.addEventListener('touchmove',  e => { moveDrag(e.touches[0].clientY); e.preventDefault(); }, { passive: false });
+  container.addEventListener('touchend',   () => endDrag());
+  container.addEventListener('mousedown',  e => startDrag(e.clientY));
+  window.addEventListener('mousemove',     e => { if (dragging) moveDrag(e.clientY); });
+  window.addEventListener('mouseup',       () => { if (dragging) endDrag(); });
+})();
+
+// ===== TOUCH RIPPLE =====
+document.addEventListener('click', function(e) {
+  const r = document.createElement('div');
+  r.className = 'ripple';
+  r.style.left = e.clientX + 'px';
+  r.style.top = e.clientY + 'px';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 600);
+});
+</script>
+</body>
+</html>
