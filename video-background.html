@@ -31,27 +31,7 @@
       z-index: 0;
     }
 
-    /* Click-to-fullscreen prompt */
-    #prompt {
-      position: fixed;
-      bottom: 32px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-      color: rgba(255,255,255,0.7);
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 13px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-      background: rgba(0,0,0,0.4);
-      padding: 8px 20px;
-      border-radius: 100px;
-      border: 1px solid rgba(255,255,255,0.2);
-      backdrop-filter: blur(6px);
-      transition: opacity 0.5s ease;
-      user-select: none;
-    }
+  
 
     #prompt.hidden {
       opacity: 0;
@@ -71,48 +51,6 @@
     preload="auto"
   ></video>
 
-  <div id="prompt">Click anywhere for fullscreen</div>
-
-  <script>
-    const video = document.getElementById('bgVideo');
-    const prompt = document.getElementById('prompt');
-
-    // Auto-play with sound muted (required by browsers)
-    video.play().catch(() => {});
-
-    // Enter fullscreen on any click
-    function goFullscreen() {
-      const el = document.documentElement;
-      if (el.requestFullscreen) {
-        el.requestFullscreen();
-      } else if (el.webkitRequestFullscreen) {
-        el.webkitRequestFullscreen();
-      } else if (el.mozRequestFullScreen) {
-        el.mozRequestFullScreen();
-      } else if (el.msRequestFullscreen) {
-        el.msRequestFullscreen();
-      }
-    }
-
-    document.addEventListener('click', () => {
-      goFullscreen();
-      prompt.classList.add('hidden');
-    });
-
-    // Hide prompt once already in fullscreen
-    document.addEventListener('fullscreenchange', () => {
-      if (document.fullscreenElement) {
-        prompt.classList.add('hidden');
-      } else {
-        prompt.classList.remove('hidden');
-      }
-    });
-
-    // If video fails to play, try on interaction
-    video.addEventListener('error', () => {
-      console.warn('Video error:', video.error);
-    });
-  </script>
 
 </body>
 </html>
